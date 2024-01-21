@@ -11,36 +11,36 @@ export default function SignUp() {
     setformData({
       ...formData,
       [e.target.id]: e.target.value.trim(),
-    });
+    }); // memecah data yang di input oleh user pada setiap form sesuai dengan ID pada setiap form [.trim() digunakan untuk mencegah adanya spasi pada form]
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.username || !formData.email || !formData.password) {
       return setError("All fields are required");
-    }
-    try{
+    } // validasi kelengkapan data yang di input
+    try {
       setLoading(true);
       setError(null);
-      const res = await fetch('api/auth/signup', {
-        method: 'POST',
+      const res = await fetch("api/auth/signup", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-      if(data.success === false){
+      if (data.success === false) {
         return setError(data.message);
-      }
+      } //validasi data yang di input
       setLoading(false);
-      if(res.ok){
-        navigate('/sign-in');
+      if (res.ok) {
+        navigate("/sign-in");
       }
-    }catch(error){
+    } catch (error) {
       setError(error.message);
       setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen mt-20">
@@ -90,13 +90,19 @@ export default function SignUp() {
                 onChange={handleChange}
               />
             </div>
-            <Button gradientDuoTone="purpleToPink" type="submit" disabled={loading}>
+            <Button
+              gradientDuoTone="purpleToPink"
+              type="submit"
+              disabled={loading}
+            >
               {loading ? (
                 <>
-                <Spinner size="sm" light={true} />
-                <span className="pl-3">Loading...</span>
+                  <Spinner size="sm" light={true} />
+                  <span className="pl-3">Loading...</span>
                 </>
-              ) : 'Sign Up'}
+              ) : (
+                "Sign Up"
+              )}
             </Button>
           </form>
           <div className="flex gap-2 text-sm mt-1">
@@ -105,13 +111,11 @@ export default function SignUp() {
               Sign In
             </Link>
           </div>
-          {
-            error && (
-              <Alert className="mt-5" color="failure">
-                {error}
-              </Alert>
-            )
-          }
+          {error && (
+            <Alert className="mt-5" color="failure">
+              {error}
+            </Alert>
+          )}
         </div>
       </div>
     </div>
