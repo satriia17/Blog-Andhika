@@ -46,7 +46,7 @@ export const signin = async (req, res, next) => {
     if (!validPassword) {
       return next(errorHandler(404, "Invalid Password")); //jika password tidak sesuai maka error
     }
-    const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET); //menggunakan Json Web Token untuk membuat token
+    const token = jwt.sign({ id: validUser._id, isAdmin: validUser.isAdmin }, process.env.JWT_SECRET); //menggunakan Json Web Token untuk membuat token
     const { password: hash, ...others } = validUser._doc; //menghilangkan data password pada user
     res
       .status(200)
@@ -62,7 +62,7 @@ export const google = async (req, res, next) => {
   try {
     const user = await User.findOne({ email }); //cek apakah email ada di database
     if (user) { //Jika email ada di database maka akan dijalankan fungsi di bawah dengan memberikan akses token dan juga cookie
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+      const token = jwt.sign({ id: user._id, isAdmin: user.isAdmin }, process.env.JWT_SECRET);
       const { password, ...others } = user._doc;
       res
         .status(200)
@@ -80,7 +80,7 @@ export const google = async (req, res, next) => {
         ProfilePic: googlePhotoUrl, //memberikan profile picture dari google atau default pada model
       });
       await newUser.save(); //menyimpan data user baru
-      const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET); //memberikan token
+      const token = jwt.sign({ id: newUser._id, isAdmin: newUser.isAdmin }, process.env.JWT_SECRET); //memberikan token
       const { password, ...others } = newUser._doc;
       res
         .status(200)
