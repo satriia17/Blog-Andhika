@@ -10,13 +10,21 @@ import {
 import { app } from "../firebase";
 import { CircularProgressbar } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
-import { updateStart, updateSuccess, updateFailure, deleteUserStart, deleteUserSuccess, deleteUserFailure, signOutSuccess } from "../redux/user/userSlice";
+import {
+  updateStart,
+  updateSuccess,
+  updateFailure,
+  deleteUserStart,
+  deleteUserSuccess,
+  deleteUserFailure,
+  signOutSuccess,
+} from "../redux/user/userSlice";
 import { useDispatch } from "react-redux";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
-
+import { Link } from "react-router-dom";
 
 export default function DashProfile() {
-  const { currentUser, error } = useSelector((state) => state.user);
+  const { currentUser, error, loading } = useSelector((state) => state.user);
   const [imageFile, setImageFile] = useState(null);
   const [imageUrl, setImageUrl] = useState(null);
   const [imageProgress, setImageProgress] = useState(null);
@@ -48,13 +56,14 @@ export default function DashProfile() {
     const fileName = new Date().getTime() + imageFile.name; //menyimpan nama file dengan waktu supaya tidak error
     const storageRef = ref(storage, fileName); //menyimpan file dalam storage(firebase) dengan fungsi ref() dan menyimpan nama file
     const uploadTask = uploadBytesResumable(storageRef, imageFile); //menyimpan hasil dari image yang di upload oleh user
-    uploadTask.on( //menjalankan fungsi uploadTask
+    uploadTask.on(
+      //menjalankan fungsi uploadTask
       "state_changed", //membuat event listener
       (snapshot) => {
         const progress =
           (snapshot.bytesTransferred / snapshot.totalBytes) * 100; //menghitung progress yang dijalankan
         setImageProgress(progress.toFixed(0)); //menyimpan progress yang dijalankan
-      }, 
+      },
       (error) => {
         setImageError("Image must be less than 2MB"); //error disebabkan gambar yang di upload lebih dari 2MB yang di setting dalam firebase
         setImageProgress(null);
@@ -62,12 +71,14 @@ export default function DashProfile() {
         setImageFile(null);
         setImageUploaded(false);
       },
-      () => { //arrow function untuk menjalankan fungsi ketika upload selesai
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => { //mengambil url dari image yang di upload
+      () => {
+        //arrow function untuk menjalankan fungsi ketika upload selesai
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          //mengambil url dari image yang di upload
           setImageUrl(downloadURL); //menyimpan url dari image
           setFormData({
             ...formData,
-            profilePic: downloadURL, 
+            profilePic: downloadURL,
           }); //menyimpan url image yang di upload dalam firebase
           setImageUploaded(false);
         });
@@ -76,77 +87,84 @@ export default function DashProfile() {
   };
 
   const handleChange = (e) => {
-    setFormData({...formData, [e.target.id]: e.target.value,})
+    setFormData({ ...formData, [e.target.id]: e.target.value });
   }; //fungsi untuk memecah setiap data yang ada dan track data apa saja yang di input oleh user
 
-  const handleSubmit = async (e) => { //fungsi untuk menyimpan hasil yang di input oleh user
+  const handleSubmit = async (e) => {
+    //fungsi untuk menyimpan hasil yang di input oleh user
     e.preventDefault();
     setUpdateUserSuccess(null);
     setUpdateUserError(null);
-    if(Object.keys(formData).length === 0){ //validasi user supaya tidak submit data yang tidak berubah
-      setUpdateUserError("No changes made")
+    if (Object.keys(formData).length === 0) {
+      //validasi user supaya tidak submit data yang tidak berubah
+      setUpdateUserError("No changes made");
       return;
     }
-    if(imageUploaded){ //validasi gambar yang di upload user sudah selesai
+    if (imageUploaded) {
+      //validasi gambar yang di upload user sudah selesai
       setUpdateUserError("Please wait while image is being uploaded");
       return;
     }
-    try{
+    try {
       dispatch(updateStart()); //memulai fungsi update
-      const res = await fetch(`/api/user/update/${currentUser._id}`, { //mengambil data dari backend
+      const res = await fetch(`/api/user/update/${currentUser._id}`, {
+        //mengambil data dari backend
         method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
       });
       const data = await res.json(); //menunggu data yang di upload oleh user dan memberikan hasil
-      if(!res.ok){ //apabila data tidak sesuai akan menghasilkan error
+      if (!res.ok) {
+        //apabila data tidak sesuai akan menghasilkan error
         dispatch(updateFailure(data.message));
         setUpdateUserError(data.message);
-      }else{ //apabila data sudah tervalidasi maka data user akan ter-update
+      } else {
+        //apabila data sudah tervalidasi maka data user akan ter-update
         dispatch(updateSuccess(data));
         setUpdateUserSuccess("Profile has been updated");
       }
-    }catch(error){ //error lain seperti jaringan atau file yang di upload tidak sesuai
+    } catch (error) {
+      //error lain seperti jaringan atau file yang di upload tidak sesuai
       dispatch(updateFailure(error.message));
       setUpdateUserError(data.message);
     }
-  }
+  };
 
   const handleDelete = async () => {
     setShowModal(false);
-    try{
+    try {
       dispatch(deleteUserStart());
       const res = await fetch(`/api/user/delete/${currentUser._id}`, {
         method: "DELETE",
       });
       const data = await res.json();
-      if(!res.ok){
+      if (!res.ok) {
         dispatch(deleteUserFailure(data.message));
       } else {
         dispatch(deleteUserSuccess(data));
       }
-    }catch(error){
+    } catch (error) {
       dispatch(deleteUserFailure(error.message));
     }
-  }
+  };
 
   const handleSignOut = async () => {
-    try{
+    try {
       const res = await fetch("/api/user/signout", {
         method: "POST",
       });
       const data = await res.json();
-      if(!res.ok){
-        console.log(data.message)
-      }else{
+      if (!res.ok) {
+        console.log(data.message);
+      } else {
         dispatch(signOutSuccess());
       }
-    }catch(error){
-      console.log(error)
+    } catch (error) {
+      console.log(error);
     }
-  }
+  };
 
   return (
     <div className="max-w-lg mx-auto p-3 w-full">
@@ -193,35 +211,80 @@ export default function DashProfile() {
           type="text"
           id="username"
           placeholder="Username"
-          defaultValue={currentUser.username} onChange={handleChange}
+          defaultValue={currentUser.username}
+          onChange={handleChange}
         />
         <TextInput
           type="email"
           id="email"
           placeholder="email"
-          defaultValue={currentUser.email} onChange={handleChange}
+          defaultValue={currentUser.email}
+          onChange={handleChange}
         />
-        <TextInput type="password" id="password" placeholder="Password" onChange={handleChange} />
-        <Button type="submit" gradientDuoTone={"purpleToBlue"} outline>
-          Update
+        <TextInput
+          type="password"
+          id="password"
+          placeholder="Password"
+          onChange={handleChange}
+        />
+        <Button type="submit" gradientDuoTone={"purpleToBlue"} outline disabled={loading || imageUploaded}>
+          {loading ? "Loading..." : "Update"}
         </Button>
+        {currentUser.isAdmin && (
+          <Link to={"/create-post"}>
+            <Button
+              type="button"
+              gradientDuoTone={"purpleToBlue"}
+              className="w-full"
+            >
+              Create a Post
+            </Button>
+          </Link>
+        )}
       </form>
       <div className="text-red-500 flex justify-between mt-5">
-        <span onClick={()=> setShowModal(true)} className="cursor-pointer">Delete Account</span>
-        <span onClick={handleSignOut} className="cursor-pointer">Sign Out</span>
+        <span onClick={() => setShowModal(true)} className="cursor-pointer">
+          Delete Account
+        </span>
+        <span onClick={handleSignOut} className="cursor-pointer">
+          Sign Out
+        </span>
       </div>
-      {updateUserSuccess && <Alert color="success" className="mt-5">{updateUserSuccess}</Alert>}
-      {updateUserError && <Alert color="failure" className="mt-5">{updateUserError}</Alert>}
-      {error && <Alert color="failure" className="mt-5">{error}</Alert>}
-      <Modal show={showModal} onClose={() => setShowModal(false)} popup size={'md'} >
+      {updateUserSuccess && (
+        <Alert color="success" className="mt-5">
+          {updateUserSuccess}
+        </Alert>
+      )}
+      {updateUserError && (
+        <Alert color="failure" className="mt-5">
+          {updateUserError}
+        </Alert>
+      )}
+      {error && (
+        <Alert color="failure" className="mt-5">
+          {error}
+        </Alert>
+      )}
+      <Modal
+        show={showModal}
+        onClose={() => setShowModal(false)}
+        popup
+        size={"md"}
+      >
         <Modal.Header />
         <Modal.Body>
           <div className="text-center">
             <HiOutlineExclamationCircle className="h-14 w-14 text-gray-400 dark:text-gray-200 mb-4 mx-auto" />
-            <h3 className="mb-5 text-lg text-gray-500 dark:text-gray-400" >Are you sure you want to delete your account?</h3>
+            <h3 className="mb-5 text-lg text-gray-500 dark:text-gray-400">
+              Are you sure you want to delete your account?
+            </h3>
             <div className="flex justify-center gap-4">
-              <Button color="failure" onClick={handleDelete}>Yes I'm sure</Button>
-              <Button color="gray" onClick={() => setShowModal(false)}>No, Cancel</Button>
+              <Button color="failure" onClick={handleDelete}>
+                Yes I'm sure
+              </Button>
+              <Button color="gray" onClick={() => setShowModal(false)}>
+                No, Cancel
+              </Button>
             </div>
           </div>
         </Modal.Body>
