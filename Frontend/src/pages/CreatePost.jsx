@@ -46,7 +46,7 @@ export default function CreatePost() {
           getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
             setImageUpload(null);
             setImageError(null);
-            setFormData({ ...formData, image: downloadURL });
+            setFormData({ ...formData, Image: downloadURL });
           });
         }
       );
@@ -58,27 +58,27 @@ export default function CreatePost() {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try{
+    try {
       const res = await fetch("api/post/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
-      })
-      const data = await res.json()
-      if(!res.ok){
-        setPublishError(data.message)
-        return
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPublishError(data.message);
+        return;
       }
-      if(res.ok){
-        setPublishError(null)
-        navigate(`/post/${data.slug}`)
+      if (res.ok) {
+        setPublishError(null);
+        navigate(`/post/${data.slug}`);
       }
-    }catch(error){
-      setPublishError('Something went wrong')
+    } catch (error) {
+      setPublishError("Something went wrong");
     }
-  }
+  };
 
   return (
     <div className="p-3 max-w-3xl mx-auto min-h-screen">
@@ -134,7 +134,7 @@ export default function CreatePost() {
           </Button>
         </div>
         {imageError && <Alert color="failure">{imageError}</Alert>}
-        {formData.image && (
+        {formData.Image && (
           <img
             src={formData.image}
             alt="image"
@@ -151,7 +151,11 @@ export default function CreatePost() {
         <Button type="submit" gradientDuoTone={"purpleToBlue"}>
           Publish
         </Button>
-        {publishError && <Alert className="mt-5" color="failure">{publishError}</Alert>}
+        {publishError && (
+          <Alert className="mt-5" color="failure">
+            {publishError}
+          </Alert>
+        )}
       </form>
     </div>
   );
